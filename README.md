@@ -10,8 +10,19 @@ conda create --name env-name python=3.6
 conda install -c menpo opencv
 ```
 
+Sometimes installing opencv from conda menpo does not come with some of the functions. If a "re-run cmake" error comes up, install the other dependencies via pip:
+```
+pip install opencv-contrib-python
+```
+
 Then run `python acne_popper.py`. Select the _Top Left_ point, then the _Bottom Right_ point of an ROI around the pimple. The example image is pulled from google images. 
+
 # Example
 
 ![Input](docs/sample.jpg)
 ![Output](docs/final.jpg)
+
+# TODO: 
+- Implement circular ROI instead of rectangular
+- Better user interface
+- Other interpolation methods
