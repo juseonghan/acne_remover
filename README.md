@@ -2,5 +2,5 @@
 
 # Example
 
-![Input](sample.jpg)
-![Output](final.jpg)
+![Input](docs/sample.jpg)
+![Output](docs/final.jpg)
