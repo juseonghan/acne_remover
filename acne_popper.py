@@ -17,10 +17,6 @@ def pop_acne(img, points):
     secondpt = points[1] # bottom right
     top_left = (firstpt[1], firstpt[0])
     bottom_right = (secondpt[1], secondpt[0])
-    # top_left = points[0]
-    # bottom_right = points[1]
-    # top_right = (top_left[0], bottom_right[1])
-    # bottom_left = (bottom_right[0], top_left[1])
     top_right = (bottom_right[0], top_left[1])
     bottom_left = (top_left[0], bottom_right[1])
 
@@ -30,18 +26,6 @@ def pop_acne(img, points):
     print("Top Right:", top_right)
     print("Bottom Left:", bottom_left)
     print("Bottom_Right:", bottom_right)
-
-    # # first just make the box black
-    # num_rows = bottom_left[1] - top_left[1]
-    # num_cols = top_right[0] - top_left[0]
-    # img_patch = np.zeros((num_rows, num_cols, 3))
-    # print("image patch shape:", img_patch.shape)
-    # print("image shape:", img.shape)
-    # img[top_left[1]:bottom_left[1], top_left[0]:top_right[0],:] = img_patch
-    # # img[top_left[0]+1:bottom_left[0], top_left[1]+1:top_right[1],:] = img_patch
-
-    # img = cv.transpose(img)
-    # cv.imwrite('final.jpg', img)
 
     # first do horizontal, ie get gradient from left edge to right edge
     # hor_gradient is a list that contains difference between right edge and left edge for each row 
