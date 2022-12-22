@@ -1,6 +1,6 @@
 import numpy as np
 import cv2 as cv
-import time 
+import argparse
 
 
 # importing required packages
@@ -27,60 +27,40 @@ def pop_acne(img, points):
     print("Bottom Left:", bottom_left)
     print("Bottom_Right:", bottom_right)
 
-    # first do horizontal, ie get gradient from left edge to right edge
-    # hor_gradient is a list that contains difference between right edge and left edge for each row 
-    # specifically, we are doing right - left subtraction 
     num_rows = bottom_left[1] - top_left[1] 
-    print(f"There are {num_rows} rows")
-    hor_gradient = []
-    for row in range(num_rows): 
-        grad_b = int(img[top_right[1] + row, top_right[0], 0]) - int(img[top_left[1] + row, top_left[0], 0])
-        grad_g = int(img[top_right[1] + row, top_right[0], 1]) - int(img[top_left[1] + row, top_left[0], 1])
-        grad_r = int(img[top_right[1] + row, top_right[0], 2]) - int(img[top_left[1] + row, top_left[0], 2])
-        grads = np.array([grad_b, grad_g, grad_r])
-        hor_gradient.append(grads)
-
-    print("df/dx vector:", hor_gradient)
-    # now do vertical, ie get gradient from top edge to bottom edge
-    # ver_gradient is a list that contains difference between top and bottom edge for each column
-    # specifically, we are doing top - bottom subtraction. 
     num_columns = top_right[0] - top_left[0]
-    print(f"There are {num_columns} columns")
-    ver_gradient = []
-    for col in range(num_columns):
-        grad_b = int(img[top_left[1], top_left[0] + col, 0]) - int(img[bottom_left[1], bottom_left[0]+ col, 0])
-        grad_g = int(img[top_left[1], top_left[0] + col, 1]) - int(img[bottom_left[1], bottom_left[0]+ col, 1])
-        grad_r = int(img[top_left[1], top_left[0] + col, 2]) - int(img[bottom_left[1], bottom_left[0]+ col, 2])
-        grads = np.array([grad_b, grad_g, grad_r])
-        ver_gradient.append(grads)
-    
-    print("df/dy vector:", ver_gradient)
 
-    # we make an img_patch that finds interpolated values using hor_gradient
+    # first generate horizontal gradients
     img_patch_hor = np.zeros((num_rows, num_columns, 3))
+
     for row in range(num_rows):
-        start_val = img[top_left[1] + row, top_left[0], :]
-        for col in range(num_columns):
-            img_patch_hor[row, col, 0] = int(start_val[0]) + col * int(hor_gradient[row][0])/num_columns
-            img_patch_hor[row, col, 1] = int(start_val[1]) + col * int(hor_gradient[row][1])/num_columns
-            img_patch_hor[row, col, 2] = int(start_val[2]) + col * int(hor_gradient[row][2])/num_columns
+        img_patch_hor[row, :, 0] = linear_interpolation(img[row + top_left[1], top_left[0], 0], img[row+top_left[1], top_right[0], 0], num_columns)
+        img_patch_hor[row, :, 1] = linear_interpolation(img[row + top_left[1], top_left[0], 1], img[row+top_left[1], top_right[0], 1], num_columns)
+        img_patch_hor[row, :, 2] = linear_interpolation(img[row + top_left[1], top_left[0], 2], img[row+top_left[1], top_right[0], 2], num_columns)
 
-    # now we make img_patch that finds interpolated values using ver_gradient
+    # second generate vertical gradients
     img_patch_ver = np.zeros((num_rows, num_columns, 3))
-    for col in range(num_columns):
-        start_val = img[bottom_left[1], bottom_left[0] + col, :]
-        for row in range(num_rows):
-            img_patch_ver[row, col, 0] = int(start_val[0]) + row * int(ver_gradient[col][0])/num_rows
-            img_patch_ver[row, col, 1] = int(start_val[1]) + row * int(ver_gradient[col][1])/num_rows
-            img_patch_ver[row, col, 2] = int(start_val[2]) + row * int(ver_gradient[col][2])/num_rows
 
-    # now we average the two images together
+    for col in range(num_columns):
+        img_patch_ver[:, col, 0] = linear_interpolation(img[top_left[1], col + top_left[0], 0], img[bottom_left[1], col + top_left[0], 0], num_rows)
+        img_patch_ver[:, col, 1] = linear_interpolation(img[top_left[1], col + top_left[0], 1], img[bottom_left[1], col + top_left[0], 1], num_rows)
+        img_patch_ver[:, col, 2] = linear_interpolation(img[top_left[1], col + top_left[0], 2], img[bottom_left[1], col + top_left[0], 2], num_rows)
+
+    # # now we average the two images together
     final_patch = (img_patch_ver + img_patch_hor) / 2
     # print(final_patch)
     img[top_left[1]:bottom_left[1], top_left[0]:top_right[0],:] = final_patch
     final_img = cv.transpose(img)
-    cv.imwrite('final.jpg', final_img)
+    cv.imwrite('final_2.jpg', final_img)
 
+def linear_interpolation(start, end, num_pts):
+    ## returns a numpy array of length num_pts that starts with start linear interpolates until end
+    res = np.zeros(num_pts)
+    
+    for i in range(num_pts):
+        res[i] = int(int(start) + (int(end) - int(start))/(num_pts - 1) * i)
+
+    return res
 
 # mouse call back function
 def click_event(event, x, y, flags, params):
@@ -94,10 +74,16 @@ def click_event(event, x, y, flags, params):
             return
         cv2.imshow('image', img)
 
-img = cv.imread('sample.jpg')
+img = cv.imread('two.jpg')
 points = []
 
 cv2.imshow('image',img)
 cv2.setMouseCallback('image', click_event)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+# st = 101
+# end = 15
+# num_pts = 10
+# res = linear_interpolation(st, end, num_pts)
+# print(res)
